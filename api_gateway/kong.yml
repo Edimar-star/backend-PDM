@@ -1,0 +1,131 @@
+_format_version: '2.1'
+_transform: true
+
+services:
+  
+  - name: create-microservice
+    url: http://create_microservice:3001
+    routes:
+      - name: create_route
+        paths:
+          - /app
+        methods:
+          - POST
+
+  - name: read-microservice
+    url: http://read_microservice:3002
+    routes:
+      - name: read_route
+        paths:
+          - /app
+        methods:
+          - GET
+
+  - name: update-microservice
+    url: http://update_microservice:3003
+    routes:
+      - name: update_route
+        paths:
+          - /app
+        methods:
+          - PUT
+
+  - name: delete-microservice
+    url: http://delete_microservice:3004
+    routes:
+      - name: delete_route
+        paths:
+          - /app
+        methods:
+          - DELETE
+
+  - name: log-service
+    url: http://log_service:3005
+    routes:
+      - name: log_route
+        paths:
+          - /log
+        methods:
+          - GET
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - "*"
+      headers:
+        - Accept
+        - Accept-Version
+        - Content-Length
+        - Content-MD5
+        - Content-Type
+        - Date
+        - X-Auth-Token
+      exposed_headers:
+        - X-Auth-Token
+      credentials: true
+      max_age: 3600
+  
+  - name: http-log
+    service: create-microservice
+    config:
+      http_endpoint: http://log_service:3005
+      method: POST
+      timeout: 1000
+      keepalive: 1000
+      flush_timeout: 2
+  - name: pre-function
+    service: create-microservice
+    config:
+      access:
+        - kong.log.set_serialize_value("request.body", kong.request.get_raw_body())
+      body_filter:
+        - kong.log.set_serialize_value("response.body", kong.response.get_raw_body())
+
+  - name: http-log
+    service: read-microservice
+    config:
+      http_endpoint: http://log_service:3005
+      method: POST
+      timeout: 1000
+      keepalive: 1000
+      flush_timeout: 2
+  - name: pre-function
+    service: read-microservice
+    config:
+      access:
+        - kong.log.set_serialize_value("request.body", kong.request.get_raw_body())
+      body_filter:
+        - kong.log.set_serialize_value("response.body", kong.response.get_raw_body())
+
+  - name: http-log
+    service: update-microservice
+    config:
+      http_endpoint: http://log_service:3005
+      method: POST
+      timeout: 1000
+      keepalive: 1000
+      flush_timeout: 2
+  - name: pre-function
+    service: update-microservice
+    config:
+      access:
+        - kong.log.set_serialize_value("request.body", kong.request.get_raw_body())
+      body_filter:
+        - kong.log.set_serialize_value("response.body", kong.response.get_raw_body())
+
+  - name: http-log
+    service: delete-microservice
+    config:
+      http_endpoint: http://log_service:3005
+      method: POST
+      timeout: 1000
+      keepalive: 1000
+      flush_timeout: 2
+  - name: pre-function
+    service: delete-microservice
+    config:
+      access:
+        - kong.log.set_serialize_value("request.body", kong.request.get_raw_body())
+      body_filter:
+        - kong.log.set_serialize_value("response.body", kong.response.get_raw_body())
