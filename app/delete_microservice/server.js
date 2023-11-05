@@ -20,8 +20,15 @@ app.use(cors({
 }));
 
 app.delete('/:id', async (req, res) => {
-    await User.findByIdAndRemove(req.params.id);
-    res.status(200).send({ message: "User deleted" });
+    try {
+        const count = await User.findByIdAndRemove(req.params.id);
+        if (count > 0) {
+            return res.status(204).send({ message: "User deleted" });
+        }
+        res.status(404).send({ message: "User not found" });
+    } catch (err) {
+        res.status(500).send({ message: "Internal server error" })
+    }
 })
 
 app.listen(NODE_DELETE_DOCKER_PORT, () => console.log(`Delete server listen on port ${NODE_DELETE_DOCKER_PORT}`))
