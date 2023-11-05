@@ -88,6 +88,8 @@ services:
   kong_gateway:
     image: kong:latest
     hostname: kong
+    env_file:
+      - .env
     container_name: kong_gateway_app
     environment:
       - KONG_DATABASE=off
@@ -99,6 +101,7 @@ services:
       - KONG_DECLARATIVE_CONFIG=/kong/declarative/kong.yml
       - KONG_DNS_ORDER=LAST,A,CNAME
       - KONG_PLUGINS=cors,http-log,pre-function
+      - ORIGIN_URL=$ORIGIN_URL
     depends_on:
       - create_microservice
       - read_microservice

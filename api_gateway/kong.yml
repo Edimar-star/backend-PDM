@@ -52,7 +52,7 @@ plugins:
   - name: cors
     config:
       origins:
-        - "*"
+        - $ORIGIN_URL
       headers:
         - Accept
         - Accept-Version

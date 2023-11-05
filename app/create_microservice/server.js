@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const express = require('express')
 const morgan = require('morgan')
 const dotenv = require('dotenv')
@@ -20,12 +21,21 @@ app.use(cors({
 }));
 
 app.post('/', async (req, res) => {
-    const user = req.body;
-    if (!user) {
-        res.status(400).json({ message: "Failed user creation."})
+    try {
+        const user = req.body;
+        if (!user) {
+            return res.status(400).send({ message: "Failed user creation."})
+        }
+        // Verifico que el usuario no existe
+        const user_ = await User.findById(user._id)
+        if (user_) {
+            return res.status(409).send({ message: "User already exists." })
+        }
+        const result = await User.create(user)
+        res.status(201).send(result)
+    } catch (er) {
+        res.status(500).send({ message: 'Internal server error' });
     }
-    const result = await User.create(user)
-    res.status(200).json(result)
 })
 
 app.listen(NODE_CREATE_DOCKER_PORT, () => console.log(`Create server listen on port ${NODE_CREATE_DOCKER_PORT}`))

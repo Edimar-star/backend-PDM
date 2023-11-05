@@ -20,8 +20,15 @@ app.use(cors({
 }));
 
 app.put('/', async (req, res) => {
-    await User.findByIdAndUpdate(req.body._id, req.body);
-    res.status(200).send({ message: "Update successfull" })
+    try {
+        const user = await User.findByIdAndUpdate(req.body._id, req.body);
+        if (!user) {
+            res.status(404).send({ message: "User not found" })
+        }
+        res.status(200).send({ message: "Update successfull" })
+    } catch (err) {
+        res.status(500).send({ message: "Internal server error" })
+    }
 })
 
 app.listen(NODE_UPDATE_DOCKER_PORT, () => console.log(`Update server listen on port ${NODE_UPDATE_DOCKER_PORT}`))

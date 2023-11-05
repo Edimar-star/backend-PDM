@@ -24,56 +24,68 @@ function getDistinctValues(dict1, dict2) {
     return Object.keys(distinctValues).join(',');
 }
 
-function validateMethod (user, method, upstream_status, upstream_uri) {
-    if (upstream_status !== "200") return false
-    if ((method === "POST" || method === "PUT") && user) return true
-    if ((method === "DELETE" || method === "GET") && upstream_uri) return true
-
-    return false
+function validateMethod (method, upstream_status) {
+    return (method === "POST" && upstream_status === "201") || 
+            (method === "GET" && upstream_status === "200") || 
+            (method === "PUT" && upstream_status === "200") || 
+            (method === "DELETE" && upstream_status === "201")
 }
 
 controller.newLog = async (req, res) => {
-    const { body, method } = req.body.request
-    const { upstream_status, upstream_uri } = req.body
-    const user = JSON.parse(body);
+    try {
+        const { body, method } = req.body.request
+        const { upstream_status } = req.body
+        const user = JSON.parse(body);
 
-    if (validateMethod(user, method, upstream_status, upstream_uri)) {
-        const actions = {
-            "POST": "Escritura",
-            "GET": "Lectura", 
-            "PUT": "Actualización",
-            "DELETE": "Eliminación"
+        if (validateMethod(method, upstream_status)) {
+            const user_ = await User.findById(user._id)
+            if (!user_) {
+                return res.status(404).send({ message: "User not found" })
+            }
+            // Realizamos la descripcion
+            const values = {
+                "POST": ["Escritura", "Creación del usuario por primera vez"],
+                "GET": ["Lectura", "Lectura de datos del usuario"], 
+                "PUT": ["Actualización", `Actualización de los campos: ${getDistinctValues(user_, user)}`],
+                "DELETE": ["Eliminación", "Eliminación permanente del usuario"]
+            }
+
+            const [action, description] = values[method]
+            const log = { user_id: user._id, action, description }
+            result = await Log.create(log)
+            return res.status(201).send(log)
         }
 
-        const user_ = await User.findById(user._id)
-        // Realizamos la descripcion
-        const descriptions = {
-            "POST": "Creación del usuario por primera vez",
-            "GET": "Lectura de datos del usuario",
-            "PUT": `Actualización de los campos: ${getDistinctValues(user_, user)}`,
-            "DELETE": "Eliminación permanente del usuario"
-        }
-
-        const log = { 
-            user_id: user._id, 
-            action: actions[method],
-            description: descriptions[method]
-        }
-
-        result = await Log.create(log)
-        return res.status(200).send(log)
+        res.status(400).send({ message: "Log not created" })
+    } catch (err) {
+        res.status(500).send({ message: "Internal server error" })
     }
-
-    res.status(200).send({ message: "Log not created" })
 }
 
 controller.getLogs = async (req, res) => {
-    const { user_id, start, end } = req.params;
-    const logs = await Log.find({ user_id }).skip(start - 1).limit(end - start + 1)
-    if (logs) {
-        return res.status(200).send(logs)
+    try {
+        const { start, end } = req.params;
+        const logs = await Log.aggregate([
+            { "$match": req.body },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'user_id',
+                    foreignField: '_id',
+                    as: 'usuario',
+                },
+            },
+            {
+                $unwind: '$usuario', // Deshace el array creado por $lookup
+            },
+        ]).skip(start - 1).limit(end - start + 1)
+        if (logs) {
+            return res.status(200).send(logs)
+        }
+        res.status(404).send({ message: "There is not logs for this user." })
+    } catch (err) {
+        res.status(500).send({ message: "Internal server error" })
     }
-    res.status(404).send({ message: "There is not logs for this user." })
 }
 
 module.exports = controller
