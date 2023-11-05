@@ -15,18 +15,17 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 app.use(morgan('dev'));
 app.use(cors({
-    origin: "*",
+    origin: `${ORIGIN_URL}`,
     credentials: true
 }));
 
 app.post('/', async (req, res) => {
     const user = req.body;
-    console.log(user)
     if (!user) {
-        res.status(400).json({ message: "Failed post"})
+        res.status(400).json({ message: "Failed user creation."})
     }
     const result = await User.create(user)
-    res.status(200).json(user)
+    res.status(200).json(result)
 })
 
 app.listen(NODE_CREATE_DOCKER_PORT, () => console.log(`Create server listen on port ${NODE_CREATE_DOCKER_PORT}`))

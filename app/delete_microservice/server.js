@@ -15,13 +15,13 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 app.use(morgan('dev'));
 app.use(cors({
-    origin: "*",
+    origin: `${ORIGIN_URL}`,
     credentials: true
 }));
 
 app.delete('/:id', async (req, res) => {
     await User.findByIdAndRemove(req.params.id);
-    res.send('User deleted');
+    res.status(200).send({ message: "User deleted" });
 })
 
 app.listen(NODE_DELETE_DOCKER_PORT, () => console.log(`Delete server listen on port ${NODE_DELETE_DOCKER_PORT}`))
