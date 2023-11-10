@@ -1,0 +1,107 @@
+services:
+  - name: mongodb
+    image: mongo:latest
+    restart: always
+    envVars:
+      - .env
+    volumes:
+      - ./mongodb_data:/data/db
+    networks:
+      - server_network
+    ports:
+      - "$MONGODB_LOCAL_PORT:$MONGODB_DOCKER_PORT"
+    logging:
+      driver: none
+
+  - name: mongo-express
+    image: mongo-express:latest
+    envVars:
+      - .env
+    dependsOn:
+      - mongodb
+    environment:
+      - "ME_CONFIG_MONGODB_SERVER=$MONGODB_HOST"
+      - "ME_CONFIG_BASICAUTH_USERNAME=$MONGODB_USER"
+      - "ME_CONFIG_BASICAUTH_PASSWORD=$MONGODB_PASSWORD"
+    ports:
+      - "8080:8081"
+    networks:
+      - server_network
+    logging:
+      driver: none
+
+  - name: create_microservice
+    build: ./app/create_microservice
+    envVars:
+      - .env
+    dependsOn:
+      - mongo-express
+    networks:
+      - server_network
+    ports:
+      - "$NODE_CREATE_LOCAL_PORT:$NODE_CREATE_DOCKER_PORT"
+
+  - name: read_microservice
+    build: ./app/read_microservice
+    envVars:
+      - .env
+    dependsOn:
+      - mongo-express
+    networks:
+      - server_network
+    ports:
+      - "$NODE_READ_LOCAL_PORT:$NODE_READ_DOCKER_PORT"
+
+  - name: update_microservice
+    build: ./app/update_microservice
+    envVars:
+      - .env
+    dependsOn:
+      - mongo-express
+    networks:
+      - server_network
+    ports:
+      - "$NODE_UPDATE_LOCAL_PORT:$NODE_UPDATE_DOCKER_PORT"
+
+  - name: delete_microservice
+    build: ./app/delete_microservice
+    envVars:
+      - .env
+    dependsOn:
+      - mongo-express
+    networks:
+      - server_network
+    ports:
+      - "$NODE_DELETE_LOCAL_PORT:$NODE_DELETE_DOCKER_PORT"
+
+  - name: log_service
+    build: ./log
+    envVars:
+      - .env
+    dependsOn:
+      - mongo-express
+    networks:
+      - server_network
+    ports:
+      - "$NODE_LOG_LOCAL_PORT:$NODE_LOG_DOCKER_PORT"
+
+  - name: kong_gateway
+    image: kong:latest
+    hostname: kong
+    envVars:
+      - .env
+    dependsOn:
+      - create_microservice
+      - read_microservice
+      - update_microservice
+      - delete_microservice
+      - log_service
+    volumes:
+      - ./api_gateway:/kong/declarative/
+    networks:
+      - server_network
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+      - "127.0.0.1:8001:8001"
+      - "127.0.0.1:8444:8444"
