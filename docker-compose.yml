@@ -10,7 +10,7 @@ volumes:
 
 services:
   
-  mongo:
+  mongodb:
     image: mongo:latest
     restart: always
     container_name: mongo_db
@@ -25,13 +25,32 @@ services:
     logging:
       driver: none
 
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongoui
+    env_file:
+      - .env
+    depends_on:
+      - mongodb
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=$MONGODB_HOST
+      - ME_CONFIG_BASICAUTH_USERNAME=$MONGODB_USER
+      - ME_CONFIG_BASICAUTH_PASSWORD=$MONGODB_PASSWORD
+      - ME_CONFIG_OPTIONS_EDITORTHEME=ambiance
+    ports:
+      - "8080:8081"
+    networks:
+      - server_network
+    logging:
+      driver: none
+
   create_microservice:
     build: ./app/create_microservice
     container_name: create_microservice_app
     env_file:
       - .env
     depends_on:
-      - mongo
+      - mongo-express
     networks:
       - server_network
     ports:
@@ -43,7 +62,7 @@ services:
     env_file:
       - .env
     depends_on:
-      - mongo
+      - mongo-express
     networks:
       - server_network
     ports:
@@ -55,7 +74,7 @@ services:
     env_file:
       - .env
     depends_on:
-      - mongo
+      - mongo-express
     networks:
       - server_network
     ports:
@@ -67,7 +86,7 @@ services:
     env_file:
       - .env
     depends_on:
-      - mongo
+      - mongo-express
     networks:
       - server_network
     ports:
@@ -79,7 +98,7 @@ services:
     env_file:
       - .env
     depends_on:
-      - mongo
+      - mongo-express
     networks:
       - server_network
     ports:
