@@ -8,16 +8,16 @@ function getDistinctValues(dict1, dict2) {
     // Verificar las llaves en el primer diccionario
     Object.keys(dict1).forEach(key => {
         if (!dict2.hasOwnProperty(key)) {
-            distinctValues[key] = dict1[key];
+            distinctValues[key] = [dict1[key], ""]
         } else if (dict1[key] !== dict2[key]) {
-            distinctValues[key] = dict1[key];
+            distinctValues[key] = [dict1[key], dict2[key]]
         }
     });
 
     // Verificar las llaves en el segundo diccionario
     Object.keys(dict2).forEach(key => {
         if (!dict1.hasOwnProperty(key)) {
-            distinctValues[key] = dict2[key];
+            distinctValues[key] = ["", dict2[key]]
         }
     });
 
@@ -46,7 +46,7 @@ controller.newLog = async (req, res) => {
             const values = {
                 "POST": ["Escritura", "Creación del usuario por primera vez"],
                 "GET": ["Lectura", "Lectura de datos del usuario"], 
-                "PUT": ["Actualización", `Actualización de los campos: ${getDistinctValues(user_, user)}`],
+                "PUT": ["Actualización", getDistinctValues(user_, user)],
                 "DELETE": ["Eliminación", "Eliminación permanente del usuario"]
             }
 
