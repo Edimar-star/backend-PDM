@@ -14,7 +14,8 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 app.use(morgan('dev'));
 app.use(cors({
-    origin: `${ORIGIN_URL}`,
+    origin: ORIGIN_URL,
+    methods: ["OPTIONS", "GET"],
     credentials: true
 }));
 

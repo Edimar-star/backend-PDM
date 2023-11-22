@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const express = require('express')
 const morgan = require('morgan')
 const dotenv = require('dotenv')
@@ -10,19 +9,21 @@ const app = express()
 
 require('./utils/database')
 const User = require('./models/User')
+const Image = require('./models/Image')
 
 //Configuracion
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 app.use(morgan('dev'));
 app.use(cors({
-    origin: `${ORIGIN_URL}`,
+    origin: ORIGIN_URL,
+    methods: ["OPTIONS", "POST"],
     credentials: true
 }));
 
 app.post('/', async (req, res) => {
     try {
-        const user = req.body;
+        const { user, picture } = req.body;
         if (!user) {
             return res.status(400).send({ message: "Failed user creation."})
         }
@@ -31,10 +32,11 @@ app.post('/', async (req, res) => {
         if (user_) {
             return res.status(409).send({ message: "User already exists." })
         }
-        const result = await User.create(user)
-        res.status(201).send(result)
+        const current = await User.create(user)
+        await Image.create(picture)
+        return res.status(201).send({ current })
     } catch (er) {
-        res.status(500).send({ message: 'Internal server error' });
+        return res.status(500).send({ message: 'Internal server error' });
     }
 })
 

@@ -1,54 +1,31 @@
 const User = require('../models/User')
+const Image = require('../models/Image')
 const controller = {}
 
-controller.getTotalUsers = async (req, res) => {
+controller.getImage = async (req, res) => {
     try {
-        const count = await User.find().count()
-        if (count) {
-            return res.status(200).send({ total: count })
+        const image = await Image.findById(req.params.id)
+        if (image) {
+            return res.status(200).send({ current: image })
         }
-        res.status(404).send({ message: "There is not users." })
+        return res.status(404).send({ message: "Image not found" })
     } catch (err) {
-        res.status(500).send({ message: "Internal server error" })
-    }
-}
-
-controller.getUsers = async (req, res) => {
-    try {
-        const { start, end } = req.params;
-        const users = await User.find().skip(start - 1).limit(end - start + 1)
-        if (users) {
-            return res.status(200).send(users)
-        }
-        res.status(404).send({ message: "There is not users." })
-    } catch (err) {
-        res.status(500).send({ message: "Internal server error" })
-    }
-}
-
-controller.getUserById = async (req, res) => {
-    try {
-        const user = await User.findById(req.params.id);
-        if (user) {
-            return res.status(200).send(user)
-        }
-        res.status(404).send({ message: "User not found" })
-    } catch (err) {
-        res.status(500).send({ message: "Internal server error" })
+        return res.status(500).send({ message: "Internal server error" })
     }
 }
 
 controller.getUserByfilters = async (req, res) => {
     try {
-        const { start, end } = req.params;
-        const users = await User.find(req.body).skip(start - 1).limit(end - start + 1)
-        if (users) {
-            res.status(200).send(users)
+        const { start, end } = req.params
+        const users = await User.find(req.query).skip(start - 1).limit(end - start + 1)
+        const total = await User.find(req.query).count()
+        if (users.length > 0) {
+            return res.status(200).send({ current: { users, total }})
         } else {
-            res.status(404).send({ message: "Users not found" })
+            return res.status(404).send({ message: "Users not found" })
         }
     } catch (err) {
-        res.status(500).send({ message: "Internal server error" })
+        return res.status(500).send({ message: "Internal server error" })
     }
 }
 

@@ -1,5 +1,4 @@
 const Log = require('../models/Log')
-const User = require('../models/User')
 const controller = {}
 
 function getDistinctValues(dict1, dict2) {
@@ -25,66 +24,64 @@ function getDistinctValues(dict1, dict2) {
 }
 
 function validateMethod (method, upstream_status) {
-    return (method === "POST" && upstream_status === "201") || 
-            (method === "GET" && upstream_status === "200") || 
-            (method === "PUT" && upstream_status === "200") || 
-            (method === "DELETE" && upstream_status === "201")
+    return (method == "POST" && upstream_status < 300) || 
+            (method == "GET" && upstream_status < 400) || 
+            (method == "PUT" && upstream_status < 300) || 
+            (method == "DELETE" && upstream_status < 300)
+}
+
+const createLog = async (current, before, method) => {
+    const values = {
+        "POST": ["Escritura", "Creación del usuario por primera vez"],
+        "GET": ["Lectura", "Lectura de datos del usuario"], 
+        "PUT": ["Actualización", getDistinctValues(before, current).toString()],
+        "DELETE": ["Eliminación", "Eliminación permanente del usuario"]
+    }
+
+    const [action, description] = values[method]
+    const log = { user_id: current._id, action, description }
+    result = await Log.create(log)
 }
 
 controller.newLog = async (req, res) => {
     try {
-        const { body, method } = req.body.request
-        const { upstream_status } = req.body
-        const user = JSON.parse(body);
+        const method = req.body.request.method
+        const upstream_status = req.body.response.status
 
         if (validateMethod(method, upstream_status)) {
-            const user_ = await User.findById(user._id)
-            if (!user_) {
-                return res.status(404).send({ message: "User not found" })
+            const { current, before } = JSON.parse(req.body.response.body)
+            if (method == "POST") {
+                createLog(current, {}, method)
+            } else if (method == "PUT") {
+                createLog(current, before, method)
+            } else if(method == "DELETE") {
+                createLog(current, {}, method)
+            } else if (method == "GET" && !current.users) {
+                createLog(current, {}, method)
+            } else if (method == "GET" && current.users) {
+                current.users.forEach(user => createLog(user, {}, method))
             }
-            // Realizamos la descripcion
-            const values = {
-                "POST": ["Escritura", "Creación del usuario por primera vez"],
-                "GET": ["Lectura", "Lectura de datos del usuario"], 
-                "PUT": ["Actualización", getDistinctValues(user_, user)],
-                "DELETE": ["Eliminación", "Eliminación permanente del usuario"]
-            }
-
-            const [action, description] = values[method]
-            const log = { user_id: user._id, action, description }
-            result = await Log.create(log)
-            return res.status(201).send(log)
+            
+            return res.status(201).send("Log created")
         }
 
-        res.status(400).send({ message: "Log not created" })
+        return res.status(200).send({ message: "Log not created" })
     } catch (err) {
-        res.status(500).send({ message: "Internal server error" })
+        return res.status(200).send({ message: "Internal server error" })
     }
 }
 
 controller.getLogs = async (req, res) => {
     try {
         const { start, end } = req.params;
-        const logs = await Log.aggregate([
-            { "$match": req.body },
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'user_id',
-                    foreignField: '_id',
-                    as: 'usuario',
-                },
-            },
-            {
-                $unwind: '$usuario', // Deshace el array creado por $lookup
-            },
-        ]).skip(start - 1).limit(end - start + 1)
-        if (logs) {
-            return res.status(200).send(logs)
+        const logs = await Log.find(req.query).skip(start - 1).limit(end - start + 1)
+        const total = await Log.find(req.query).count()
+        if (logs.length > 0) {
+            return res.status(200).send({ logs, total })
         }
-        res.status(404).send({ message: "There is not logs for this user." })
+        return res.status(404).send({ message: "There is not logs for this user." })
     } catch (err) {
-        res.status(500).send({ message: "Internal server error" })
+        return res.status(500).send({ message: "Internal server error" })
     }
 }
 

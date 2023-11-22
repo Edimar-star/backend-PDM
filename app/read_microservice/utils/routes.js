@@ -1,10 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { getTotalUsers, getUsers, getUserById, getUserByfilters } = require('./controller')
+const { getUserByfilters, getImage } = require('./controller')
 
-router.get("/getTotalUsers", getTotalUsers)
-router.get("/getUsers/:start/:end", getUsers)
-router.get('/:id', getUserById)
+router.get('/:id', getImage)
 router.get('/:start/:end', getUserByfilters)
 
 module.exports = router

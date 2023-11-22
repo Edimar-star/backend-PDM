@@ -11,10 +11,7 @@ const userSchema = new Schema({
     gender: String,
     email: String,
     phone: String,
-    picture: {
-        name: String,
-        path: String
-    }
+    picture: String
 })
 
 module.exports = mongoose.model('users', userSchema);
