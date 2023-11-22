@@ -9,25 +9,29 @@ const app = express()
 
 require('./utils/database')
 const User = require('./models/User')
+const Image = require('./models/Image')
 
 //Configuracion
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 app.use(morgan('dev'));
 app.use(cors({
-    origin: `${ORIGIN_URL}`,
+    origin: ORIGIN_URL,
+    methods: ["OPTIONS", "PUT"],
     credentials: true
 }));
 
 app.put('/', async (req, res) => {
     try {
-        const user = await User.findByIdAndUpdate(req.body._id, req.body);
-        if (!user) {
+        const { user, picture } = req.body
+        const current = await User.findByIdAndUpdate(user._id, user);
+        await Image.findByIdAndUpdate(picture._id, picture)
+        if (!current) {
             res.status(404).send({ message: "User not found" })
         }
-        res.status(200).send({ message: "Update successfull" })
+        return res.status(200).send({ before: user, current })
     } catch (err) {
-        res.status(500).send({ message: "Internal server error" })
+        return res.status(500).send({ message: "Internal server error" })
     }
 })
 
