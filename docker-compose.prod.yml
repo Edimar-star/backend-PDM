@@ -1,14 +1,10 @@
 version: '3'
-
 networks:
   server_network:
     driver: bridge
-
 volumes:
   mongodb_data:
-
 services:
-  
   mongodb:
     image: mongo:latest
     restart: always
@@ -19,7 +15,6 @@ services:
       - server_network
     ports:
       - "27017:27017"
-
   mongo-express:
     image: mongo-express:latest
     container_name: mongoui
@@ -34,7 +29,6 @@ services:
       - "8080:8081"
     networks:
       - server_network
-
   create_microservice:
     image: edmarod/psdm-backend:cms
     container_name: create_microservice_app
@@ -50,7 +44,6 @@ services:
       - server_network
     ports:
       - "3001:3001"
-
   read_microservice:
     image: edmarod/psdm-backend:rms
     container_name: read_microservice_app
@@ -66,7 +59,6 @@ services:
       - server_network
     ports:
       - "3002:3002"
-
   update_microservice:
     image: edmarod/psdm-backend:ums
     container_name: update_microservice_app
@@ -82,7 +74,6 @@ services:
       - server_network
     ports:
       - "3003:3003"
-
   delete_microservice:
     image: edmarod/psdm-backend:dms
     container_name: delete_microservice_app
@@ -98,7 +89,6 @@ services:
       - server_network
     ports:
       - "3004:3004"
-
   log_service:
     image: edmarod/psdm-backend:ls
     container_name: log_service_app
@@ -114,7 +104,6 @@ services:
       - server_network
     ports:
       - "3005:3005"
-
   kong_gateway:
     image: edmarod/psdm-backend:apgw
     hostname: kong
