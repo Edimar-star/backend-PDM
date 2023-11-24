@@ -24,14 +24,14 @@ app.use(cors({
 app.put('/', async (req, res) => {
     try {
         const { user, picture } = req.body
-        const current = await User.findByIdAndUpdate(user._id, user);
+        const before = await User.findByIdAndUpdate(user._id, user);
         await Image.findByIdAndUpdate(picture._id, picture)
         if (!current) {
-            res.status(404).send({ message: "User not found" })
+            res.status(404).send({ message: "Usuario no encontrado" })
         }
-        return res.status(200).send({ before: user, current })
+        return res.status(200).send({ before, current: user })
     } catch (err) {
-        return res.status(500).send({ message: "Internal server error" })
+        return res.status(500).send({ message: "Error del servidor" })
     }
 })
 
