@@ -1,10 +1,14 @@
 version: '3'
+
 networks:
   server_network:
     driver: bridge
+
 volumes:
   mongodb_data:
+
 services:
+  
   mongodb:
     image: mongo:latest
     restart: always
@@ -15,6 +19,22 @@ services:
       - server_network
     ports:
       - "27017:27017"
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongoui
+    depends_on:
+      - mongodb
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_BASICAUTH_USERNAME=root
+      - ME_CONFIG_BASICAUTH_PASSWORD=12345
+      - ME_CONFIG_OPTIONS_EDITORTHEME=ambiance
+    ports:
+      - "8080:8081"
+    networks:
+      - server_network
+
   create_microservice:
     image: edmarod/psdm-backend:cms
     container_name: create_microservice_app
@@ -25,11 +45,12 @@ services:
       - MONGODB_DATABASE=PDM_DB
       - ORIGIN_URL=https://personal-data-management.onrender.com
     depends_on:
-      - mongodb
+      - mongo-express
     networks:
       - server_network
     ports:
       - "3001:3001"
+
   read_microservice:
     image: edmarod/psdm-backend:rms
     container_name: read_microservice_app
@@ -40,11 +61,12 @@ services:
       - MONGODB_DATABASE=PDM_DB
       - ORIGIN_URL=https://personal-data-management.onrender.com
     depends_on:
-      - mongodb
+      - mongo-express
     networks:
       - server_network
     ports:
       - "3002:3002"
+
   update_microservice:
     image: edmarod/psdm-backend:ums
     container_name: update_microservice_app
@@ -55,11 +77,12 @@ services:
       - MONGODB_DATABASE=PDM_DB
       - ORIGIN_URL=https://personal-data-management.onrender.com
     depends_on:
-      - mongodb
+      - mongo-express
     networks:
       - server_network
     ports:
       - "3003:3003"
+
   delete_microservice:
     image: edmarod/psdm-backend:dms
     container_name: delete_microservice_app
@@ -70,11 +93,12 @@ services:
       - MONGODB_DATABASE=PDM_DB
       - ORIGIN_URL=https://personal-data-management.onrender.com
     depends_on:
-      - mongodb
+      - mongo-express
     networks:
       - server_network
     ports:
       - "3004:3004"
+
   log_service:
     image: edmarod/psdm-backend:ls
     container_name: log_service_app
@@ -85,11 +109,12 @@ services:
       - MONGODB_DATABASE=PDM_DB
       - ORIGIN_URL=https://personal-data-management.onrender.com
     depends_on:
-      - mongodb
+      - mongo-express
     networks:
       - server_network
     ports:
       - "3005:3005"
+
   kong_gateway:
     image: edmarod/psdm-backend:apgw
     hostname: kong
