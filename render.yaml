@@ -1,0 +1,88 @@
+services:
+  mongodb:
+    image: mongo:latest
+    envVars:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    envFiles:
+      - .env
+    ports:
+      - ${MONGODB_LOCAL_PORT}:${MONGODB_DOCKER_PORT}
+    logging:
+      driver: none
+
+  mongo-express:
+    image: mongo-express:latest
+    envFiles:
+      - .env
+    envVars:
+      ME_CONFIG_MONGODB_SERVER: ${MONGODB_HOST}
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGODB_USER}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGODB_PASSWORD}
+      ME_CONFIG_OPTIONS_EDITORTHEME: ambiance
+    ports:
+      - "8080:8081"
+    logging:
+      driver: none
+
+  create_microservice:
+    buildCommand: "docker-compose build create_microservice"
+    startCommand: "docker-compose up create_microservice"
+    envFiles:
+      - .env
+    ports:
+      - ${NODE_CREATE_LOCAL_PORT}:${NODE_CREATE_DOCKER_PORT}
+
+  read_microservice:
+    buildCommand: "docker-compose build read_microservice"
+    startCommand: "docker-compose up read_microservice"
+    envFiles:
+      - .env
+    ports:
+      - ${NODE_READ_LOCAL_PORT}:${NODE_READ_DOCKER_PORT}
+
+  update_microservice:
+    buildCommand: "docker-compose build update_microservice"
+    startCommand: "docker-compose up update_microservice"
+    envFiles:
+      - .env
+    ports:
+      - ${NODE_UPDATE_LOCAL_PORT}:${NODE_UPDATE_DOCKER_PORT}
+
+  delete_microservice:
+    buildCommand: "docker-compose build delete_microservice"
+    startCommand: "docker-compose up delete_microservice"
+    envFiles:
+      - .env
+    ports:
+      - ${NODE_DELETE_LOCAL_PORT}:${NODE_DELETE_DOCKER_PORT}
+
+  log_service:
+    buildCommand: "docker-compose build log_service"
+    startCommand: "docker-compose up log_service"
+    envFiles:
+      - .env
+    ports:
+      - ${NODE_LOG_LOCAL_PORT}:${NODE_LOG_DOCKER_PORT}
+
+  kong_gateway:
+    image: kong:latest
+    envFiles:
+      - .env
+    envVars:
+      KONG_DATABASE: off
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: "0.0.0.0:8001, 0.0.0.0:8444 ssl"
+      KONG_DECLARATIVE_CONFIG: /kong/declarative/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: cors,http-log,pre-function
+    volumes:
+      - ./api_gateway:/kong/declarative/
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+      - "127.0.0.1:8001:8001"
+      - "127.0.0.1:8444:8444"
