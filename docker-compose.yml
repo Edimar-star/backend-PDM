@@ -119,8 +119,7 @@ services:
       - KONG_ADMIN_LISTEN=0.0.0.0:8001, 0.0.0.0:8444 ssl
       - KONG_DECLARATIVE_CONFIG=/kong/declarative/kong.yml
       - KONG_DNS_ORDER=LAST,A,CNAME
-      - KONG_PLUGINS=cors,http-log,pre-function,request-size-limiting
-      - ORIGIN_URL=$ORIGIN_URL
+      - KONG_PLUGINS=cors,http-log,pre-function
     depends_on:
       - create_microservice
       - read_microservice

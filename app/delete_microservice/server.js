@@ -26,11 +26,12 @@ app.delete('/:id', async (req, res) => {
         const user = await User.findByIdAndRemove(req.params.id);
         await Image.findByIdAndRemove(req.params.id);
         if (user) {
-            return res.status(204).send({ current: user });
+            console.log(user)
+            return res.status(200).send({ current: user });
         }
-        return res.status(404).send({ message: "User not found" });
+        return res.status(404).send({ message: "Usuario no encontrado" });
     } catch (err) {
-        return res.status(500).send({ message: "Internal server error" })
+        return res.status(500).send({ message: "Error del servidor" })
     }
 })
 

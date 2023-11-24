@@ -2,6 +2,17 @@ const Log = require('../models/Log')
 const controller = {}
 
 function getDistinctValues(dict1, dict2) {
+    const properties = {
+        "_id": "Numero de documento",
+        "documentType": "Tipo de documento",
+        "firstName": "Primer nombre",
+        "middleName": "Segundo nombre",
+        "lastNames": "Apellidos",
+        "bornDate": "Fecha de nacimiento",
+        "gender": "Genero",
+        "email": "correo",
+        "phone": "Telefono"
+    };
     const distinctValues = {};
 
     // Verificar las llaves en el primer diccionario
@@ -20,7 +31,10 @@ function getDistinctValues(dict1, dict2) {
         }
     });
 
-    return Object.keys(distinctValues).join(',');
+    return Object.keys(distinctValues).filter(key => key != "__v").map(key => {
+        const [before, after] = distinctValues[key]
+        return `El campo '${properties[key]}' con valor '${before}' cambio al valor '${after}'`
+    }).join('\n').toString();
 }
 
 function validateMethod (method, upstream_status) {
@@ -34,12 +48,12 @@ const createLog = async (current, before, method) => {
     const values = {
         "POST": ["Escritura", "Creación del usuario por primera vez"],
         "GET": ["Lectura", "Lectura de datos del usuario"], 
-        "PUT": ["Actualización", getDistinctValues(before, current).toString()],
+        "PUT": ["Actualización", getDistinctValues(before, current)],
         "DELETE": ["Eliminación", "Eliminación permanente del usuario"]
     }
 
     const [action, description] = values[method]
-    const log = { user_id: current._id, action, description }
+    const log = { action, description, user: current }
     result = await Log.create(log)
 }
 
@@ -56,8 +70,8 @@ controller.newLog = async (req, res) => {
                 createLog(current, before, method)
             } else if(method == "DELETE") {
                 createLog(current, {}, method)
-            } else if (method == "GET" && !current.users) {
-                createLog(current, {}, method)
+            } else if (method == "GET" && current.user) {
+                createLog(current.user, {}, method)
             } else if (method == "GET" && current.users) {
                 current.users.forEach(user => createLog(user, {}, method))
             }

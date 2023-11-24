@@ -25,18 +25,18 @@ app.post('/', async (req, res) => {
     try {
         const { user, picture } = req.body;
         if (!user) {
-            return res.status(400).send({ message: "Failed user creation."})
+            return res.status(400).send({ message: "Error al crear el usuario"})
         }
         // Verifico que el usuario no existe
         const user_ = await User.findById(user._id)
         if (user_) {
-            return res.status(409).send({ message: "User already exists." })
+            return res.status(409).send({ message: "El usuario ya existe" })
         }
         const current = await User.create(user)
         await Image.create(picture)
         return res.status(201).send({ current })
     } catch (er) {
-        return res.status(500).send({ message: 'Internal server error' });
+        return res.status(500).send({ message: 'Error del servidor' });
     }
 })
 
