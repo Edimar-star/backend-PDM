@@ -15,20 +15,6 @@ services:
       - server_network
     ports:
       - "27017:27017"
-  mongo-express:
-    image: mongo-express:latest
-    container_name: mongoui
-    depends_on:
-      - mongodb
-    environment:
-      - ME_CONFIG_MONGODB_SERVER=mongodb
-      - ME_CONFIG_BASICAUTH_USERNAME=root
-      - ME_CONFIG_BASICAUTH_PASSWORD=12345
-      - ME_CONFIG_OPTIONS_EDITORTHEME=ambiance
-    ports:
-      - "8080:8081"
-    networks:
-      - server_network
   create_microservice:
     image: edmarod/psdm-backend:cms
     container_name: create_microservice_app
@@ -39,7 +25,7 @@ services:
       - MONGODB_DATABASE=PDM_DB
       - ORIGIN_URL=https://personal-data-management.onrender.com
     depends_on:
-      - mongo-express
+      - mongodb
     networks:
       - server_network
     ports:
@@ -54,7 +40,7 @@ services:
       - MONGODB_DATABASE=PDM_DB
       - ORIGIN_URL=https://personal-data-management.onrender.com
     depends_on:
-      - mongo-express
+      - mongodb
     networks:
       - server_network
     ports:
@@ -69,7 +55,7 @@ services:
       - MONGODB_DATABASE=PDM_DB
       - ORIGIN_URL=https://personal-data-management.onrender.com
     depends_on:
-      - mongo-express
+      - mongodb
     networks:
       - server_network
     ports:
@@ -84,7 +70,7 @@ services:
       - MONGODB_DATABASE=PDM_DB
       - ORIGIN_URL=https://personal-data-management.onrender.com
     depends_on:
-      - mongo-express
+      - mongodb
     networks:
       - server_network
     ports:
@@ -99,7 +85,7 @@ services:
       - MONGODB_DATABASE=PDM_DB
       - ORIGIN_URL=https://personal-data-management.onrender.com
     depends_on:
-      - mongo-express
+      - mongodb
     networks:
       - server_network
     ports:
