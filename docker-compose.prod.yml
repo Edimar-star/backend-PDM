@@ -1,0 +1,145 @@
+version: '3'
+
+networks:
+  server_network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+
+services:
+  
+  mongodb:
+    image: mongo:latest
+    restart: always
+    container_name: mongo_db
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - server_network
+    ports:
+      - "27017:27017"
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongoui
+    depends_on:
+      - mongodb
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_BASICAUTH_USERNAME=root
+      - ME_CONFIG_BASICAUTH_PASSWORD=12345
+      - ME_CONFIG_OPTIONS_EDITORTHEME=ambiance
+    ports:
+      - "8080:8081"
+    networks:
+      - server_network
+
+  create_microservice:
+    image: edmarod/psdm-backend:cms
+    container_name: create_microservice_app
+    environment:
+      - NODE_CREATE_DOCKER_PORT=3001
+      - MONGODB_HOST=mongodb
+      - MONGODB_DOCKER_PORT=27017
+      - MONGODB_DATABASE=PDM_DB
+      - ORIGIN_URL=https://personal-data-management.onrender.com
+    depends_on:
+      - mongo-express
+    networks:
+      - server_network
+    ports:
+      - "3001:3001"
+
+  read_microservice:
+    image: edmarod/psdm-backend:rms
+    container_name: read_microservice_app
+    environment:
+      - NODE_READ_DOCKER_PORT=3002
+      - MONGODB_HOST=mongodb
+      - MONGODB_DOCKER_PORT=27017
+      - MONGODB_DATABASE=PDM_DB
+      - ORIGIN_URL=https://personal-data-management.onrender.com
+    depends_on:
+      - mongo-express
+    networks:
+      - server_network
+    ports:
+      - "3002:3002"
+
+  update_microservice:
+    image: edmarod/psdm-backend:ums
+    container_name: update_microservice_app
+    environment:
+      - NODE_UPDATE_DOCKER_PORT=3003
+      - MONGODB_HOST=mongodb
+      - MONGODB_DOCKER_PORT=27017
+      - MONGODB_DATABASE=PDM_DB
+      - ORIGIN_URL=https://personal-data-management.onrender.com
+    depends_on:
+      - mongo-express
+    networks:
+      - server_network
+    ports:
+      - "3003:3003"
+
+  delete_microservice:
+    image: edmarod/psdm-backend:dms
+    container_name: delete_microservice_app
+    environment:
+      - NODE_DELETE_DOCKER_PORT=3004
+      - MONGODB_HOST=mongodb
+      - MONGODB_DOCKER_PORT=27017
+      - MONGODB_DATABASE=PDM_DB
+      - ORIGIN_URL=https://personal-data-management.onrender.com
+    depends_on:
+      - mongo-express
+    networks:
+      - server_network
+    ports:
+      - "3004:3004"
+
+  log_service:
+    image: edmarod/psdm-backend:ls
+    container_name: log_service_app
+    environment:
+      - NODE_LOG_DOCKER_PORT=3005
+      - MONGODB_HOST=mongodb
+      - MONGODB_DOCKER_PORT=27017
+      - MONGODB_DATABASE=PDM_DB
+      - ORIGIN_URL=https://personal-data-management.onrender.com
+    depends_on:
+      - mongo-express
+    networks:
+      - server_network
+    ports:
+      - "3005:3005"
+
+  kong_gateway:
+    image: edmarod/psdm-backend:apgw
+    hostname: kong
+    container_name: kong_gateway_app
+    environment:
+      - KONG_DATABASE=off
+      - KONG_PROXY_ACCESS_LOG=/dev/stdout
+      - KONG_ADMIN_ACCESS_LOG=/dev/stdout
+      - KONG_PROXY_ERROR_LOG=/dev/stderr
+      - KONG_ADMIN_ERROR_LOG=/dev/stderr
+      - KONG_ADMIN_LISTEN=0.0.0.0:8001, 0.0.0.0:8444 ssl
+      - KONG_DECLARATIVE_CONFIG=/kong/declarative/kong.yml
+      - KONG_DNS_ORDER=LAST,A,CNAME
+      - KONG_PLUGINS=cors,http-log,pre-function
+    depends_on:
+      - create_microservice
+      - read_microservice
+      - update_microservice
+      - delete_microservice
+      - log_service
+    command: ["kong", "docker-start"]
+    networks:
+      - server_network
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+      - "127.0.0.1:8001:8001"
+      - "127.0.0.1:8444:8444"

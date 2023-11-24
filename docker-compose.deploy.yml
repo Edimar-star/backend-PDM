@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+
+  create_microservice:
+    image: edmarod/psdm-backend:cms
+    build: ./app/create_microservice
+
+  read_microservice:
+    image: edmarod/psdm-backend:rms
+    build: ./app/read_microservice
+
+  update_microservice:
+    image: edmarod/psdm-backend:ums
+    build: ./app/update_microservice
+
+  delete_microservice:
+    image: edmarod/psdm-backend:dms
+    build: ./app/delete_microservice
+
+  log_service:
+    image: edmarod/psdm-backend:ls
+    build: ./log
+
+  api_gateway:
+    image: edmarod/psdm-backend:apgw
+    build: ./api_gateway
